@@ -1,14 +1,14 @@
+import "dotenv/config";
 import cookieParser from "cookie-parser";
- import { config } from "dotenv";
 import  express  from "express";
 import type { Request, Response } from "express";
 import router from "./routes/index.js";
- 
 
 const app = express();
+app.use(express.json());
  
 app.use(cookieParser())
-const port = 3000;
+const port = 3001;
 app.use((req, res, next) => {
   console.log(`🔔 Incoming Request: ${req.method} ${req.url}`);
   next();
