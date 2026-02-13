@@ -2,8 +2,12 @@
   "name": "projectstarter",
   "private": true,
   "scripts": {
-    "build": "npm run db:generate -w @repo/db && turbo run build --concurrency=1 --no-daemon",
-    "dev": "turbo run dev",
+    "build": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w http && npm run build -w web",
+    "build:web": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w web",
+    "build:http": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w http",
+    "start:web": "npm run start -w web",
+    "start:http": "npm run start -w http",
+    "dev": "npm run db:generate -w @repo/db && turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
@@ -16,7 +20,7 @@
     "@types/node": "^25.2.3",
     "prettier": "^3.7.4",
     "tsx": "^4.21.0",
-    "turbo": "^2.8.5",
+    "turbo": "^2.8.7",
     "typescript": "^5.9.3"
   },
   "engines": {

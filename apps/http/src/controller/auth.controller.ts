@@ -3,15 +3,42 @@ import { prisma } from "@repo/db";
 
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import TryCatch from "../middlewares/trycatch.js";
+import { RegisterSchema } from "@repo/validation";
 
-export const registerController = async (req: Request, res: Response) => {
-  try {
+export const registerController = 
+
+TryCatch(async (req: Request, res: Response) => {
     console.log(req.body);
     const { email, password, name } = req.body;
+
+
     if (!email || !password) {
       res
         .status(400)
         .json({ success: false, message: "Email and password are required" });
+      return;
+    }
+
+    const validation = RegisterSchema.safeParse(req.body);
+    if (!validation.success) {
+      const zodError = validation.error;
+
+      let firstErrorMessage : any= "Validation Failed";
+      let allErrors = []
+
+      if(zodError.issues && Array.isArray(zodError.issues)){
+ allErrors = zodError.issues.map((issue) => {
+  field : issue.path ? issue.path.join(".") : "unknown",
+  message : issue.message || "Validation Error ",
+  code : issue.code
+})
+
+firstErrorMessage = allErrors[0]?.message || "validation Erro"
+
+      res.status(400).json({ success: false,
+         message: result.error.message ,
+        error: allErrors});
       return;
     }
 
@@ -37,13 +64,10 @@ export const registerController = async (req: Request, res: Response) => {
         message: "User created successfully",
         user: { id: user.id, email: user.email },
       });
-  } catch (error) {
-    console.error("Register error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Internal server error", error });
-  }
-};
+    
+}
+)
+
 
 export const testController = async (req: Request, res: Response) => {
   const user = await prisma.user.findFirst();

@@ -1,6 +1,6 @@
-import type { NextFunction } from "express"
+import type { NextFunction, Request, Response } from "express"
 
-const Trycatch = (handler: Function)  => {
+export const TryCatch = (handler: Function)  => {
     return async (req : Request, res : Response, next : NextFunction) => {
         try {
             await handler(req, res, next)
@@ -16,3 +16,7 @@ const Trycatch = (handler: Function)  => {
     }
     
 }
+
+
+
+export default TryCatch;

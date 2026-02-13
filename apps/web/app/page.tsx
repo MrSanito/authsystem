@@ -19,5 +19,5 @@ const ThemeImage = (props: Props) => {
 };
 
 export default function Home() {
-  return <div className="bg-red-300">hello</div>;
+  return <div className="bg-red-300 min-h-screen">hello</div>;
 }
