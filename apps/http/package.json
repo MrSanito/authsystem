@@ -12,8 +12,11 @@
   },
   "dependencies": {
     "@repo/db": "^0.0.0",
-    "@repo/validation": "*"
-   },
+    "@repo/validation": "*",
+    "@types/nodemailer": "^7.0.9",
+    "@repo/redis": "*",
+    "nodemailer": "^8.0.1"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"

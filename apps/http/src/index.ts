@@ -3,6 +3,10 @@ import cookieParser from "cookie-parser";
 import  express  from "express";
 import type { Request, Response } from "express";
 import router from "./routes/index.js";
+import { getRedisClient } from "@repo/redis";
+
+
+getRedisClient()
 
 const app = express();
 app.use(express.json());
