@@ -4,10 +4,11 @@ import { prisma } from "@repo/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import TryCatch from "../middlewares/trycatch.js";
-import { RegisterSchema } from "@repo/validation";
+import { LoginSchema, RegisterSchema } from "@repo/validation";
 import { getRedisClient } from "@repo/redis";
 import crypto from "crypto";
 import { sendMail } from "../config/sendMail.js";
+import { getOtpHtml, getVerifyEmailHtml } from "../config/email.js";
 
 const redis = getRedisClient();
 
@@ -61,7 +62,10 @@ export const registerController = TryCatch(
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    console.log("hashed password", hashedPassword);
+
     const verifyToken = crypto.randomBytes(32).toString("hex");
+    console.log("verify token", verifyToken);
 
     const VerifyKey = `verify:${verifyToken}`;
 
@@ -71,31 +75,19 @@ export const registerController = TryCatch(
       password: hashedPassword,
     });
 
-    await redis.set(VerifyKey, datatoStore, { ex: 300, nx: true });
+    await redis.set(VerifyKey, datatoStore, "EX", 300, "NX");
 
     const subject = "Verify You Email for Account Creation";
-    const html = ` `;
+    const html = getVerifyEmailHtml({ email, token: verifyToken });
 
-    await sendMail(email, subject, html);
-    await redis.set(rateLimitKey, "true", { EX: 60 });
-    res.json({
+    const emailSend = await sendMail(email, subject, html);
+    console.log("email send", emailSend);
+    await redis.set(rateLimitKey, "true", "EX", 60);
+
+    return res.json({
       success: true,
       message:
         "if your email is valild  , a verification link has been send . it will expire in 5 minutes",
-    });
-
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-      },
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "User created successfully",
-      user: { id: user.id, email: user.email },
     });
   },
 );
@@ -110,36 +102,137 @@ export const testController = async (req: Request, res: Response) => {
   });
 };
 
-export const loginController = async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      res
-        .status(400)
-        .json({ success: false, message: "Email and password are required" });
-      return;
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      res.status(400).json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      res.status(400).json({ success: false, message: "Invalid credentials" });
-      return;
-    }
-
-    const token = jwt.sign(
-      { id: user.id },
-      process.env.JWT_SECRET || "secret",
-      { expiresIn: "1h" },
-    );
-    res.json({ success: true, token, message: "Login successful" });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+export const verifyUser = TryCatch(async (req: Request, res: Response) => {
+  const { token } = req.params;
+  console.log(token);
+  if (!token) {
+    return res.status(400).json({
+      success: true,
+      message: "Verification token is required",
+    });
   }
-};
+
+  const verifyKey = `verify:${token}`;
+
+  const userDataJson = await redis.get(verifyKey);
+  if (!userDataJson) {
+    return res.status(400).json({
+      success: true,
+      message: "Verification token is Expired",
+    });
+  }
+
+  await redis.del(verifyKey);
+  const userData = JSON.parse(userDataJson);
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: userData.email },
+  });
+  if (existingUser) {
+    res.status(400).json({ success: false, message: "User already exists" });
+    return;
+  }
+
+  const newUser = await prisma.user.create({
+    data: {
+      name: userData.name,
+      email: userData.email,
+      password: userData.password,
+    },
+  });
+
+  return res.status(201).json({
+    succcess: true,
+    message: " Email Verified Successfully ! you account has been created",
+    user: {
+      _id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+    },
+  });
+});
+
+export const loginUser = TryCatch(async (req: Request, res: Response) => {
+  console.log(req.body);
+
+  const validation = LoginSchema.safeParse(req.body);
+  if (!validation.success) {
+    const zodError = validation.error;
+
+    let firstErrorMessage: string = "Validation Failed";
+    let allErrors: { field: string; message: string; code: string }[] = [];
+
+    if (zodError.issues && Array.isArray(zodError.issues)) {
+      allErrors = zodError.issues.map((issue) => ({
+        field: issue.path ? issue.path.join(".") : "unknown",
+        message: issue.message || "Validation Error ",
+        code: issue.code,
+      }));
+
+      firstErrorMessage = allErrors[0]?.message || "Validation Error";
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: firstErrorMessage,
+      error: allErrors,
+    });
+  }
+
+  const { email, password } = validation.data;
+
+  const rateLimitKey = `login-rate-limit${req.ip}:${email}`;
+
+  if (await redis.get(rateLimitKey)) {
+    return res.status(409).json({
+      success: false,
+      message: "Too many request , try again later",
+    });
+  }
+
+  const User = prisma.user.findUnique({
+    where: {
+      email: email,
+    },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+    },
+  });
+
+  if (!User) {
+    return res.status(404).json({
+      success: true,
+      message: "Invalid Credential",
+    });
+  }
+  const comparePassword = await bcrypt.compare(password, User.password);
+
+  if (!comparePassword) {
+    return res.status(400).json({
+      success: true,
+      message: "Invalid Credentials",
+    });
+  }
+  const OTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const otpKey = `otp:${email}`;
+
+  await redis.set(otpKey, JSON.stringify(OTP), "EX", 300);
+
+  const Subject = `OTP FOR VERIFICATION`;
+  
+  const html = getOtpHtml({email, OTP});
+
+
+  await sendMail(email, Subject, OTP)
+
+
+  await redis.set(rateLimitKey, "true", "EX", 60)
+
+  
+
+
+
+});

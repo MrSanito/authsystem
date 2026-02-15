@@ -6,6 +6,8 @@ export const TryCatch = (handler: Function)  => {
             await handler(req, res, next)
             
         } catch (error : any) {
+
+            console.log("--------- this is the error", error)
             res.status(500).json({
                 success: false, 
                 message : error.message
