@@ -1,4 +1,4 @@
-export const getOtpHtml = ({ email, otp }) => {
+export const getOtpHtml = ({ email, otp } : any) => {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -187,7 +187,7 @@ Use the verification code below to complete your sign-in to Authentication App.
 `;
   return html;
 };
-export const getVerifyEmailHtml = ({ email, token }) => {
+export const getVerifyEmailHtml = ({ email, token } : any ) => {
   const appName = process.env.APP_NAME || "Authentication App";
   const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
   const verifyUrl = `${baseUrl.replace(/\/+$/, "")}/token/${encodeURIComponent(
