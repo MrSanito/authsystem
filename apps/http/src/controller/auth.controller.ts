@@ -9,6 +9,7 @@ import { getRedisClient } from "@repo/redis";
 import crypto from "crypto";
 import { sendMail } from "../config/sendMail.js";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/email.js";
+import { generateToken } from "../config/generateToken.js";
 
 const redis = getRedisClient();
 
@@ -190,7 +191,7 @@ export const loginUser = TryCatch(async (req: Request, res: Response) => {
     });
   }
 
-  const User = prisma.user.findUnique({
+  const User = await prisma.user.findUnique({
     where: {
       email: email,
     },
@@ -203,15 +204,17 @@ export const loginUser = TryCatch(async (req: Request, res: Response) => {
 
   if (!User) {
     return res.status(404).json({
-      success: true,
+      success: false,
       message: "Invalid Credential",
     });
   }
+
+  console.log("User Detail", User);
   const comparePassword = await bcrypt.compare(password, User.password);
 
   if (!comparePassword) {
     return res.status(400).json({
-      success: true,
+      success: false,
       message: "Invalid Credentials",
     });
   }
@@ -222,17 +225,81 @@ export const loginUser = TryCatch(async (req: Request, res: Response) => {
   await redis.set(otpKey, JSON.stringify(OTP), "EX", 300);
 
   const Subject = `OTP FOR VERIFICATION`;
-  
-  const html = getOtpHtml({email, OTP});
 
+  const html = getOtpHtml({ email, OTP });
 
-  await sendMail(email, Subject, OTP)
+  await sendMail(email, Subject, OTP);
 
+  await redis.set(rateLimitKey, "true", "EX", 60);
 
-  await redis.set(rateLimitKey, "true", "EX", 60)
+  return res.status(200).json({
+    success: true,
+    message:
+      "If your email is valid , an otp has been sent . it will be valid for 5 minutes",
+  });
+});
 
-  
+export const verifyOtp = TryCatch(async (req: Request, res: Response) => {
+  const { email, otp } = req.body;
+  console.log("email", email, "otp", otp);
 
+  if (!email || !otp) {
+    res.status(404).json({
+      success: false,
+      message: "Please provide all details",
+    });
+  }
+  const otpKey = `otp:${email}`;
 
+  const storedOtpString = await redis.get(otpKey);
 
+  console.log("stored Otp String", storedOtpString);
+
+  if (!storedOtpString) {
+    return res.status(400).json({
+      success: false,
+      message: "Otp is expired",
+    });
+  }
+
+  const storedOtp = JSON.parse(storedOtpString);
+
+  if (storedOtp != otp) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid OTP",
+    });
+  }
+
+  await redis.del(otpKey);
+
+  let User = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      name: true,
+
+      id: true,
+      email: true,
+    },
+  });
+
+  console.log("user data", User);
+
+  const tokenData = await generateToken(User?.id, res);
+
+  console.log("token data", tokenData);
+
+  res.status(200).json({
+    success: true,
+    message: `Welcome : ${User?.name}`,
+    User,
+  });
+});
+
+export const myProfile = TryCatch((req: Request, res: Response) => {
+  const User = req.user;
+
+  res.json(User)
 });

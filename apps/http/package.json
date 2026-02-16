@@ -12,12 +12,16 @@
   },
   "dependencies": {
     "@repo/db": "^0.0.0",
+    "@repo/redis": "*",
     "@repo/validation": "*",
     "@types/nodemailer": "^7.0.9",
-    "@repo/redis": "*",
+    "jsonwebtoken": "^9.0.3",
     "nodemailer": "^8.0.1"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.10"
+  }
 }
