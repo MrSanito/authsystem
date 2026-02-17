@@ -34,7 +34,6 @@ export const isAuth = async (
 
     if(catchedUser) {
             req.user = JSON.parse(catchedUser);
-
         return next()
     }
 

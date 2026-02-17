@@ -9,7 +9,7 @@ import { getRedisClient } from "@repo/redis";
 import crypto from "crypto";
 import { sendMail } from "../config/sendMail.js";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/email.js";
-import { generateToken } from "../config/generateToken.js";
+import { generateAccessToken, generateToken, revokeRefreshToken, verifyRefreshToken } from "../config/generateToken.js";
 
 const redis = getRedisClient();
 
@@ -303,3 +303,52 @@ export const myProfile = TryCatch((req: Request, res: Response) => {
 
   res.json(User)
 });
+
+
+export const refreshToken = TryCatch(async(req: Request , res: Response) => { 
+  const refreshToken = req.cookies.refreshToken;
+
+ 
+  if(!refreshToken) {
+    return res.status(401).json({
+      success: false, 
+       message: "Invalid refresh Token"
+
+    })
+  }
+
+  const decode  = await verifyRefreshToken(refreshToken);
+
+  console.log("decode debug data", decode)
+   if (!decode) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid refresh Token 123",
+    });
+  }
+
+  generateAccessToken(decode.id,res)
+
+  res.status(200).json({
+    success : true,
+    message: "token Refreshed"
+  })
+
+ })
+
+ export const logOutUser = TryCatch(async(req: Request, res: Response) => { 
+  const userId= req.user?.id;
+
+  await revokeRefreshToken(userId);
+
+  res.clearCookie("refreshToken")
+  res.clearCookie("accessToken")
+
+  await redis.del(`user:${userId}`)
+
+  res.json({
+    message: "Logged Out Successfully"
+  })
+
+
+})

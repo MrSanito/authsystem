@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { getRedisClient } from "@repo/redis";
 import type { Response } from "express";
+import { refreshToken } from "../controller/auth.controller.js";
 
 const redis = getRedisClient();
 
@@ -17,14 +18,14 @@ export const generateToken = async (id: any, res: Response) => {
 
   await redis.setex(refreshTokenKey, 7 * 24 * 60 * 60, refreshToken);
 
-  res.cookie("accessToken", {
+  res.cookie("accessToken", accessToken,  {
     httpOnly: true,
     // secure: true,
     sameSite: "strict",
     maxAge: 1 * 60 * 1000,
   });
 
-  res.cookie("refreshToken", {
+  res.cookie("refreshToken", refreshToken,  {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly : true, 
     samesite: "none", 
@@ -34,3 +35,44 @@ export const generateToken = async (id: any, res: Response) => {
 
   return {refreshToken, accessToken}
 };
+
+export const verifyRefreshToken = async (RefreshToken : any ) => {
+
+    try {
+      const decode: any = jwt.verify(RefreshToken, process.env.REFRESH_SECRET!);
+      console.log("decoded data jwt verify", decode)
+
+      const storedToken = await redis.get(`refreshToken:${decode.id}`)
+
+      console.log("stored Data", storedToken)
+
+      if(storedToken === RefreshToken) {
+        return decode;
+
+      }
+      return null
+        
+    } catch (error) {
+      return null
+        
+    }
+  }
+
+  export const generateAccessToken = (id : any, res: Response) => { 
+    const accessToken = jwt.sign({id},process.env.JWT_SECRET!, {
+      expiresIn: "7d"
+    })
+
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      // secure: true,
+      sameSite: "strict",
+      maxAge: 1 * 60 * 1000,
+    });
+   }
+
+
+   export const revokeRefreshToken = async(userId : string) => { 
+    await redis.del(`refresh_token:${userId}`);
+
+    }
