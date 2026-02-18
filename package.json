@@ -7,7 +7,7 @@
     "build:http": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w http",
     "start:web": "npm run start -w web",
     "start:http": "npm run start -w http",
-    "dev": "npm run db:generate -w @repo/db && turbo run dev",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
