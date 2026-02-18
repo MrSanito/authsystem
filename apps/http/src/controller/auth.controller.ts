@@ -211,6 +211,7 @@ export const loginUser = TryCatch(async (req: Request, res: Response) => {
 
   console.log("User Detail", User);
   const comparePassword = await bcrypt.compare(password, User.password);
+  console.log("compared password", comparePassword)
 
   if (!comparePassword) {
     return res.status(400).json({

@@ -1,26 +1,43 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import api from "../lib/api";
+import { toast } from "react-toastify";
 
 const Page = () => {
   useEffect(() => {
     console.log("fresh project");
+
     console.error("fresh project error");
   }, []);
 
-const [email, setEmail] = useState("")
-const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [btnLoading, setBtnLoading] = useState(false);
 
-
-  const clickHandler = (e) => {
+  const submitHandler =async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("here we are");
+
+    try {
+      setBtnLoading(true)
+      console.log("here we are", "email", email, "password : ", password);
+
+      const { data } =await api.post("/auth/login", { email, password });
+      console.log(data)
+      toast.success(data.message);
+    } catch (error: any) {
+      console.log(error)
+      toast.error(error.response.data.message);
+    }
+    finally{
+      setBtnLoading(false)
+    }
   };
 
   return (
     <div className="min-h-screen w-full flex justify-center items-center bg-black">
       <form
-        onSubmit={clickHandler}
+        onSubmit={submitHandler}
         className="w-full max-w-md bg-gray-900 p-8 rounded-xl shadow-lg"
       >
         <h2 className="text-2xl font-semibold mb-6 text-center">Login Form</h2>
@@ -36,11 +53,9 @@ const [password, setPassword] = useState("")
             placeholder="name@example.com"
             required
             value={email}
-            onClick={(e)=>{
-              setEmail(e.target.value)
-            }
-
-            }
+            onChange={(e) => {
+              setEmail(e.target.value);
+            }}
           />
         </div>
 
@@ -54,6 +69,10 @@ const [password, setPassword] = useState("")
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
             placeholder="••••••••"
             required
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+            }}
           />
         </div>
 
@@ -65,8 +84,9 @@ const [password, setPassword] = useState("")
         <button
           type="submit"
           className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-md transition"
+          disabled={btnLoading}
         >
-          Submit
+          {btnLoading ? "Submitting...": "Log In"}
         </button>
       </form>
     </div>
