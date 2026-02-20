@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { getRedisClient } from "@repo/redis";
 import type { Response } from "express";
 import { refreshToken } from "../controller/auth.controller.js";
+import { generateCSRFToken } from "./csrfMiddleware.js";
 
 const redis = getRedisClient();
 
@@ -20,20 +21,23 @@ export const generateToken = async (id: any, res: Response) => {
 
   res.cookie("accessToken", accessToken,  {
     httpOnly: true,
-    // secure: true,
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
     maxAge: 1 * 60 * 1000,
   });
 
   res.cookie("refreshToken", refreshToken,  {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly : true, 
-    samesite: "none", 
-    // secure: true, 
+    sameSite: "none", 
+    secure: true, 
 
   });
 
-  return {refreshToken, accessToken}
+  const csrfToken = await generateCSRFToken(id, res);
+
+
+  return {refreshToken, accessToken, csrfToken}
 };
 
 export const verifyRefreshToken = async (RefreshToken : any ) => {
@@ -65,8 +69,8 @@ export const verifyRefreshToken = async (RefreshToken : any ) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      // secure: true,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
       maxAge: 1 * 60 * 1000,
     });
    }

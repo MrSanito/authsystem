@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { sendMail } from "../config/sendMail.js";
 import { getOtpHtml, getVerifyEmailHtml } from "../config/email.js";
 import { generateAccessToken, generateToken, revokeRefreshToken, verifyRefreshToken } from "../config/generateToken.js";
+import { refreshCSRFToken } from "../config/csrfMiddleware.js";
 
 const redis = getRedisClient();
 
@@ -241,6 +242,7 @@ export const loginUser = TryCatch(async (req: Request, res: Response) => {
 });
 
 export const verifyOtp = TryCatch(async (req: Request, res: Response) => {
+  console.log("request body",req.body)
   const { email, otp } = req.body;
   console.log("email", email, "otp", otp);
 
@@ -344,6 +346,7 @@ export const refreshToken = TryCatch(async(req: Request , res: Response) => {
 
   res.clearCookie("refreshToken")
   res.clearCookie("accessToken")
+  res.clearCookie("csrfToken")
 
   await redis.del(`user:${userId}`)
 
@@ -352,4 +355,16 @@ export const refreshToken = TryCatch(async(req: Request , res: Response) => {
   })
 
 
+})
+
+export const refreshCSRF = TryCatch(async(req: Request , res: Response) => { 
+  const userId = req.user?.id;
+
+ const newCSRFToken = await refreshCSRFToken(userId, res);
+
+  res.status(200).json({
+    success: true,
+    message: "CSRF Token Refreshed",
+    csrfToken: newCSRFToken
+  })
 })
