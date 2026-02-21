@@ -203,6 +203,7 @@ export const loginUser = TryCatch(async (req: Request, res: Response) => {
     },
   });
 
+  console.log("user", User)
   if (!User) {
     return res.status(404).json({
       success: false,

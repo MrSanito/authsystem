@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState ,Dispatch, SetStateAction} from "react";
 import api from "../lib/api";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
+
 
 interface AuthContextType {
   isAuth: boolean;
@@ -25,6 +27,8 @@ interface User {
 const AppContext =  createContext<AuthContextType | null>(null);
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
+const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
@@ -55,6 +59,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       toast.success("LogOut SuccessFull")
       setIsAuth(false)
       setUser(null)
+      router.push("/login")
       
     } catch (error) {
       console.log(error)
