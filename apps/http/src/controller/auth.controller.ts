@@ -69,6 +69,7 @@ export const registerController = TryCatch(
     const verifyToken = crypto.randomBytes(32).toString("hex");
     console.log("verify token", verifyToken);
 
+    
     const VerifyKey = `verify:${verifyToken}`;
 
     const datatoStore = JSON.stringify({

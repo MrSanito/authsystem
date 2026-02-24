@@ -43,9 +43,10 @@ export const verifyCSRFToken = async (
       req.headers["csrf-token"];
 
     if (!ClientToken) {
+      console.log("token missing")
       return res.status(403).json({
         success: false,
-        message: "CSRF Token is missing Please Refresh The Page",
+        message: "CSRF_Token is missing Please Refresh The Page",
         code: "CSRF_TOKEN_MISSING",
       });
     }
@@ -54,6 +55,8 @@ export const verifyCSRFToken = async (
     const storedToken = await redis.get(csrfKey);
 
     if(!storedToken){
+      console.log("token missing");
+
       return res.status(403).json({
         success: false,
         message: "Invalid CSRF Token  . Please Refresh The Page",

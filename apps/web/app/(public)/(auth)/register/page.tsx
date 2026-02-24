@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import api from "@/app/lib/api";
 
 const Page = () => {
   const [name, setName] = useState("");
@@ -11,15 +12,19 @@ const Page = () => {
   const [btnLoading, setBtnLoading] = useState(false);
 
   const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
     setBtnLoading(true);
+    e.preventDefault();
 
 
     // API logic will be implemented later
 
     
     console.log("Register data:", { name, email, password });
-    toast.info("Registration logic to be implemented");
+
+    const {data} = await api.post("/auth/register", {
+      name, email , password
+    })
+    toast.success(data.message);
     setBtnLoading(false);
   };
 
