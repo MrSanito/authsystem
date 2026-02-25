@@ -83,9 +83,9 @@ const isPublicRoute = publicRoute.some(
 );    console.log("let go", isPublicRoute)
 
     if(isPublicRoute){
-      return
+      setLoading(false);
+      return;
     }
-    
 
 
     fetchUser();

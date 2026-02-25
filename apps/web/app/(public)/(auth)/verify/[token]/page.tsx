@@ -14,17 +14,17 @@ const Page = () => {
 
   const verifyToken = async () => {
     try {
-      const { data } = await api.get(`/auth/verify/${token}`);
+      const { data } = await api.post(`/auth/verify/${token}`);
 
       toast.success(data.message);
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.response.data.message);
     }
   };
 
   useEffect(() => {
     verifyToken();
-  }, []);
+  }, [ ]);
 
 
   return (
