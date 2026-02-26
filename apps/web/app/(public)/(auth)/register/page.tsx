@@ -15,17 +15,27 @@ const Page = () => {
     setBtnLoading(true);
     e.preventDefault();
 
-
     // API logic will be implemented later
 
-    
     console.log("Register data:", { name, email, password });
+    try {
+      const { data } = await api.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
+      toast.success(data.message);
+      setBtnLoading(false);
+    } catch (error) {
+      console.log(error);
+  toast.error(error?.response?.data?.message || "Something went wrong");
 
-    const {data} = await api.post("/auth/register", {
-      name, email , password
-    })
-    toast.success(data.message);
-    setBtnLoading(false);
+      setBtnLoading(false);
+  
+    } finally {
+      setBtnLoading(false);
+
+    }
   };
 
   return (
@@ -39,7 +49,10 @@ const Page = () => {
         </h2>
 
         <div className="mb-5">
-          <label htmlFor="name" className="block mb-2 text-sm font-medium text-white">
+          <label
+            htmlFor="name"
+            className="block mb-2 text-sm font-medium text-white"
+          >
             Full Name
           </label>
           <input
@@ -54,7 +67,10 @@ const Page = () => {
         </div>
 
         <div className="mb-5">
-          <label htmlFor="email" className="block mb-2 text-sm font-medium text-white">
+          <label
+            htmlFor="email"
+            className="block mb-2 text-sm font-medium text-white"
+          >
             Email Address
           </label>
           <input
@@ -69,7 +85,10 @@ const Page = () => {
         </div>
 
         <div className="mb-5">
-          <label htmlFor="password" className="block mb-2 text-sm font-medium text-white">
+          <label
+            htmlFor="password"
+            className="block mb-2 text-sm font-medium text-white"
+          >
             Password
           </label>
           <input
@@ -93,7 +112,10 @@ const Page = () => {
 
         <p className="mt-6 text-center text-gray-400 text-sm">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 hover:underline hover:text-blue-300 transition-colors">
+          <Link
+            href="/login"
+            className="text-blue-400 hover:underline hover:text-blue-300 transition-colors"
+          >
             Log in here
           </Link>
         </p>

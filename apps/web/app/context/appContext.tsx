@@ -54,8 +54,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
       setUser(data as User);
       setIsAuth(true);
+
     } catch (error) {
       console.log(error);
+      setUser(null);
+      setIsAuth(false)
     } finally {
       setLoading(false);
     }

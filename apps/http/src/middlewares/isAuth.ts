@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import { prisma } from "@repo/db";
 
 import { getRedisClient } from "@repo/redis";
+import { isSessionActive } from "../config/generateToken.js";
 
 const redis = getRedisClient();
 
@@ -29,11 +30,27 @@ export const isAuth = async (
             message: "token expired",
         });
     }
+
+    const sessionActive = await isSessionActive(decodedData.id, 
+        decodedData.sessionId
+    )
+
+    if(!sessionActive) {
+        res.clearCookie("refreshToken")
+        res.clearCookie("accessToken")
+        res.clearCookie("csrfToken")
+
+        return res.status(401).json({
+            success : false, 
+            message: "Session Expired! You have been logged in from anoter device"
+        })
+    }
         
     const catchedUser = await redis.get(`user:${decodedData.id}`);
 
     if(catchedUser) {
             req.user = JSON.parse(catchedUser);
+            req.sessionId = decodedData.sessionId;
         return next()
     }
 
@@ -61,6 +78,8 @@ if(!User){
 await redis.set(`user:${User.id}`, JSON.stringify(User), "EX", 3600);
 
 req.user= User;
+            req.sessionId = decodedData.sessionId;
+
 
 next();
 
@@ -76,3 +95,16 @@ next();
     })
   }
 };
+ export const authorizedAdmin = async (req:Request, res: Response, next: NextFunction) => {
+
+    const user = req.user;
+    if(user.role ! == "admin") {
+        return res.status(401).json({
+            success: false, 
+            message : "You are not allowed for this activity "
+        })
+    }
+
+    next()
+    
+ }

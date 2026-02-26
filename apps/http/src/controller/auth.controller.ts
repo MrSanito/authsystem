@@ -300,13 +300,33 @@ export const verifyOtp = TryCatch(async (req: Request, res: Response) => {
     success: true,
     message: `Welcome : ${User?.name}`,
     User,
+    sessionInfo: {
+      sessionId: tokenData.sessionId,
+      loginTime: new Date().toISOString(),
+      csrfToken: tokenData.csrfToken,
+    }
   });
 });
 
-export const myProfile = TryCatch((req: Request, res: Response) => {
+export const myProfile = TryCatch(async(req: Request, res: Response) => {
   const User = req.user;
+  const sessionId = req.sessionId;
 
-  res.json(User)
+  const sessionData = await redis.get(`session:${ sessionId}`)
+
+  let sessionInfo = null ;
+
+  if(sessionData){
+    const parsedSession = JSON.parse(sessionData);
+    sessionInfo = {
+      sessionId, 
+      loginTime : parsedSession.createdAt, 
+      lastActivity : parsedSession.lastActivity,
+    }
+  }
+
+
+  res.json({User, sessionInfo})
 });
 
 
@@ -326,13 +346,16 @@ export const refreshToken = TryCatch(async(req: Request , res: Response) => {
 
   console.log("decode debug data", decode)
    if (!decode) {
+    res.clearCookie( "refreshToken")
+    res.clearCookie( "accessToken")
+    res.clearCookie( "csrfToken")
     return res.status(401).json({
       success: false,
-      message: "Invalid refresh Token 123",
+      message: "Session Expired ! Please Login",
     });
   }
 
-  generateAccessToken(decode.id,res)
+  generateAccessToken(decode.id, decode.sessionId, res, )
 
   res.status(200).json({
     success : true,
@@ -368,5 +391,12 @@ export const refreshCSRF = TryCatch(async(req: Request , res: Response) => {
     success: true,
     message: "CSRF Token Refreshed",
     csrfToken: newCSRFToken
+  })
+})
+ 
+export const adminController = TryCatch(async (req:Request, res: Response, ) => {
+  res.status(200).json({
+    success: true, 
+    message: "Hello Admin"
   })
 })
