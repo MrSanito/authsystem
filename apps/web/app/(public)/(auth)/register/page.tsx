@@ -19,16 +19,16 @@ const Page = () => {
 
     console.log("Register data:", { name, email, password });
     try {
-      const { data } = await api.post("/auth/register", {
-        name,
-        email,
-        password,
-      });
+      const { data } = await api.post<any>("/auth/register", {
+          name,
+          email,
+          password,
+        });
       toast.success(data.message);
       setBtnLoading(false);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
-  toast.error(error?.response?.data?.message || "Something went wrong");
+      toast.error(error?.response?.data?.message || "Something went wrong");
 
       setBtnLoading(false);
   

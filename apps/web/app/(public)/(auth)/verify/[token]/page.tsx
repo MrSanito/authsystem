@@ -17,7 +17,7 @@ const Page = () => {
 
   const verifyToken = async () => {
     try {
-      const { data } = await api.post(`/auth/verify/${token}`);
+      const { data } = await api.post<any>(`/auth/verify/${token}`);
       setStatus("success");
       setMessage(data.message || "Your email has been verified successfully!");
       toast.success(data.message);

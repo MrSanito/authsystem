@@ -98,7 +98,7 @@ next();
  export const authorizedAdmin = async (req:Request, res: Response, next: NextFunction) => {
 
     const user = req.user;
-    if(user.role ! == "admin") {
+    if(!user || user.role !== "admin") {
         return res.status(401).json({
             success: false, 
             message : "You are not allowed for this activity "
