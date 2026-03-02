@@ -2,9 +2,9 @@
   "name": "projectstarter",
   "private": true,
   "scripts": {
-    "build": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w @repo/redis && npm run build -w http && npm run build -w web",
-    "build:web": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w @repo/redis && npm run build -w web",
-    "build:http": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w @repo/redis && npm run build -w http",
+    "build": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w @repo/redis && npm run build -w @repo/validation && npm run build -w http && npm run build -w web",
+    "build:web": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w @repo/redis && npm run build -w @repo/validation && npm run build -w web",
+    "build:http": "npm run db:generate -w @repo/db && npm run build -w @repo/db && npm run build -w @repo/redis && npm run build -w @repo/validation && npm run build -w http",
     "start:web": "npm run start -w web",
     "start:http": "npm run start -w http",
     "dev": "turbo run dev",
