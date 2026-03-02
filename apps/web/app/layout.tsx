@@ -1,14 +1,7 @@
-"use client"
-
- 
 import "./globals.css";
 import { ToastContainer, toast } from "react-toastify";
 import { AppProvider } from "./context/appContext";
 import Navbar from "./components/Navbar";
- 
-
-
-
 
 export default function RootLayout({
   children,
